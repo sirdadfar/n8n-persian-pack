@@ -1,0 +1,29 @@
+# n8n با داکر — تنظیمات سبک برای یک سرور ایرانی
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-Asia/Tehran}
+      - TZ=${TZ:-Asia/Tehran}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # وب‌هوک‌ها را با آدرس واقعی دامنه بساز تا لینک‌های ثبت‌شده درست باشند
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  n8n_data:

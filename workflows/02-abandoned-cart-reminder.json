@@ -1,0 +1,311 @@
+{
+  "name": "۰۲ — یادآوری سبد خرید رها شده",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "c30b1e7f-e781-43b0-a631-074fb2ea726b",
+      "name": "هر ۳۰ دقیقه",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.WOO_BASE_URL }}/wp-json/wc/v3/orders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "pending"
+            },
+            {
+              "name": "per_page",
+              "value": "30"
+            },
+            {
+              "name": "orderby",
+              "value": "date"
+            },
+            {
+              "name": "order",
+              "value": "desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8fab8870-bbbd-4d55-bb9f-5eaf964990fd",
+      "name": "سفارش‌های در انتظار پرداخت",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "2edc49f9-96de-4448-91fa-76d17e3d3073",
+      "name": "دسته‌دسته",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.billing.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.meta_data.filter(m => m.key === 'reminder_sent').length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "smaller"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "24c7add6-1c6a-431e-89f3-8d71250f7a5e",
+      "name": "قابل یادآوری است؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KAVENEGAR_BASE_URL || 'https://api.kavenegar.com' }}/v1/{{ $env.KAVENEGAR_API_KEY }}/sms/send.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "receptor",
+              "value": "={{ $json.billing.phone }}"
+            },
+            {
+              "name": "message",
+              "value": "=سبد خرید شما آماده است 😊\n{{ ($json.line_items || []).map(i => i.name).slice(0,3).join('، ') }}\nبرای تکمیل: {{ $env.WOO_BASE_URL }}/checkout/"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "9982dfee-cbed-4db8-9c2a-e968f91f5575",
+      "name": "پیامک یادآوری",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        140,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WOO_BASE_URL }}/wp-json/wc/v3/orders/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ meta_data: [ ...($json.meta_data || []).filter(m => m.key !== 'reminder_sent'), { key: 'reminder_sent', value: (($json.meta_data || []).find(m => m.key === 'reminder_sent')?.value || 0) + 1 } ] }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "67d025cb-2294-4e5e-ada7-8ebccb5977b1",
+      "name": "ثبت برچسب یادآوری",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        360,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "d7f14e15-e242-4f19-8a68-403d51be7b0e",
+      "name": "مکث",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6231e4e0-2db1-4b57-959d-c2e2b583899a",
+      "name": "رد شود",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        140,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "هر ۳۰ دقیقه": {
+      "main": [
+        [
+          {
+            "node": "سفارش‌های در انتظار پرداخت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "سفارش‌های در انتظار پرداخت": {
+      "main": [
+        [
+          {
+            "node": "دسته‌دسته",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "دسته‌دسته": {
+      "main": [
+        [
+          {
+            "node": "قابل یادآوری است؟",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "دسته‌دسته",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "قابل یادآوری است؟": {
+      "main": [
+        [
+          {
+            "node": "پیامک یادآوری",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "رد شود",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پیامک یادآوری": {
+      "main": [
+        [
+          {
+            "node": "ثبت برچسب یادآوری",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ثبت برچسب یادآوری": {
+      "main": [
+        [
+          {
+            "node": "مکث",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "مکث": {
+      "main": [
+        [
+          {
+            "node": "دسته‌دسته",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4818a0f7-e145-46e5-8fd3-c227aefc9cb9",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "فروشگاه",
+    "پیامک",
+    "بازیابی فروش"
+  ]
+}

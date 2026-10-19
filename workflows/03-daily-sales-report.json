@@ -1,0 +1,163 @@
+{
+  "name": "۰۳ — گزارش فروش روزانه",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "e7496448-ce4a-4ae4-bcbb-be92da3669e4",
+      "name": "هر روز ۲۱:۰۰",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.WOO_BASE_URL }}/wp-json/wc/v3/orders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "after",
+              "value": "={{ $now.startOf('day').toISO() }}"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            },
+            {
+              "name": "status",
+              "value": "processing,completed,on-hold"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1ab6555b-d5cb-48d3-8e9d-ddd38b914678",
+      "name": "سفارش‌های امروز",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// تجمیع سفارش‌های امروز به یک خلاصهٔ قابل خواندن\nconst orders = $input.all().map(i => i.json).filter(o => o && o.id);\nconst paid = orders.filter(o => ['processing', 'completed'].includes(o.status));\n\nlet revenue = 0;\nconst productCount = {};\nconst customerCount = {};\n\nfor (const o of paid) {\n  revenue += Number(o.total || 0);\n  const name = `${o.billing?.first_name || ''} ${o.billing?.last_name || ''}`.trim() || 'مشتری مهمان';\n  customerCount[name] = (customerCount[name] || 0) + 1;\n  for (const item of o.line_items || []) {\n    productCount[item.name] = (productCount[item.name] || 0) + item.quantity;\n  }\n}\n\nconst topProducts = Object.entries(productCount)\n  .sort((a, b) => b[1] - a[1])\n  .slice(0, 5)\n  .map(([name, qty], i) => `${i + 1}. ${name} — ${qty} عدد`);\n\nconst repeatCustomers = Object.entries(customerCount).filter(([, n]) => n > 1);\n\nconst fmt = n => new Intl.NumberFormat('fa-IR').format(Math.round(n));\n\nconst text = [\n  `📊 گزارش فروش ${$now.toFormat('yyyy/MM/dd')}`,\n  '',\n  `سفارش پرداخت‌شده: ${fmt(paid.length)}`,\n  `درآمد: ${fmt(revenue)} تومان`,\n  `میانگین سبد خرید: ${fmt(paid.length ? revenue / paid.length : 0)} تومان`,\n  '',\n  topProducts.length ? 'پرفروش‌ها:' : 'امروز فروشی ثبت نشده.',\n  ...topProducts,\n  repeatCustomers.length ? `\\nمشتری تکراری: ${repeatCustomers.length} نفر` : '',\n].filter(Boolean).join('\\n');\n\nreturn [{ json: { text, revenue, orders: paid.length, topProducts } }];\n"
+      },
+      "id": "f6cf38b2-5a24-47bc-813a-7b0d2cadfa1b",
+      "name": "محاسبهٔ گزارش",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.ADMIN_TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "261c8b59-495f-44f7-bc5b-2db527609e85",
+      "name": "ارسال به تلگرام",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.REPORT_WEBHOOK_URL || 'https://example.com/api/reports' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "7417256b-3a61-47d3-8582-2730a8545791",
+      "name": "ذخیرهٔ گزارش روی سرور",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "هر روز ۲۱:۰۰": {
+      "main": [
+        [
+          {
+            "node": "سفارش‌های امروز",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "سفارش‌های امروز": {
+      "main": [
+        [
+          {
+            "node": "محاسبهٔ گزارش",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "محاسبهٔ گزارش": {
+      "main": [
+        [
+          {
+            "node": "ارسال به تلگرام",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "ذخیرهٔ گزارش روی سرور",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d5816ae4-9a7c-42f3-a011-4108dfa9fc09",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "گزارش",
+    "مدیریت"
+  ]
+}

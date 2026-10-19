@@ -1,0 +1,288 @@
+{
+  "name": "۰۱ — سفارش ووکامرس → حسابداری → پیامک",
+  "nodes": [
+    {
+      "parameters": {
+        "event": "order.created",
+        "options": {}
+      },
+      "id": "910db553-596b-4b5e-b6e7-4025e2da4585",
+      "name": "سفارش جدید ووکامرس",
+      "type": "n8n-nodes-base.wooCommerceTrigger",
+      "typeVersion": 1,
+      "position": [
+        -780,
+        300
+      ],
+      "webhookId": "189256e5-7399-4dce-a98e-178f87cceed2"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "order_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "2",
+              "name": "customer",
+              "value": "={{ $json.billing.first_name }} {{ $json.billing.last_name }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "mobile",
+              "value": "={{ $json.billing.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "total",
+              "value": "={{ $json.total }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "items",
+              "value": "={{ $json.line_items.map(i => i.name + ' x' + i.quantity).join(' | ') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "76337062-0576-47df-ba28-2c8577495fd4",
+      "name": "آماده‌سازی دادهٔ سفارش",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ACCOUNTING_API_URL }}/api/v1/invoices",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.ACCOUNTING_API_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ external_id: $json.order_id, customer_name: $json.customer, mobile: $json.mobile, description: $json.items, amount: Number($json.total), type: 'sale' }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "699e58e7-254d-4af4-aa6b-72408b59e0ea",
+      "name": "ثبت فاکتور در حسابداری",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 201,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2f88918e-dffd-4d50-b5cf-2ca282fd5931",
+      "name": "فاکتور ثبت شد؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KAVENEGAR_BASE_URL || 'https://api.kavenegar.com' }}/v1/{{ $env.KAVENEGAR_API_KEY }}/sms/send.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "receptor",
+              "value": "={{ $('آماده‌سازی دادهٔ سفارش').item.json.mobile }}"
+            },
+            {
+              "name": "message",
+              "value": "=سفارش {{ $('آماده‌سازی دادهٔ سفارش').item.json.order_id }} ثبت شد. مبلغ: {{ $('آماده‌سازی دادهٔ سفارش').item.json.total }} تومان"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "3fb232fb-0eb0-4462-92be-8814f4090b2f",
+      "name": "پیامک تأیید به مشتری",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.ADMIN_TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ ثبت فاکتور سفارش {{ $('آماده‌سازی دادهٔ سفارش').item.json.order_id }} در حسابداری ناموفق بود.\nکد پاسخ: {{ $json.statusCode }}\nمشتری: {{ $('آماده‌سازی دادهٔ سفارش').item.json.customer }}",
+        "additionalFields": {}
+      },
+      "id": "6aed6d06-5d9f-4bcc-b704-db325978aac5",
+      "name": "هشدار به مدیر در تلگرام",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "de737b5d-f050-4059-907b-e2a686d87892",
+      "name": "پایان",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        320,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "سفارش جدید ووکامرس": {
+      "main": [
+        [
+          {
+            "node": "آماده‌سازی دادهٔ سفارش",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "آماده‌سازی دادهٔ سفارش": {
+      "main": [
+        [
+          {
+            "node": "ثبت فاکتور در حسابداری",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ثبت فاکتور در حسابداری": {
+      "main": [
+        [
+          {
+            "node": "فاکتور ثبت شد؟",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "فاکتور ثبت شد؟": {
+      "main": [
+        [
+          {
+            "node": "پیامک تأیید به مشتری",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "هشدار به مدیر در تلگرام",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "پیامک تأیید به مشتری": {
+      "main": [
+        [
+          {
+            "node": "پایان",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "هشدار به مدیر در تلگرام": {
+      "main": [
+        [
+          {
+            "node": "پایان",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "402a2a2b-4ca5-4c36-9e90-92eb1e28f314",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "فروشگاه",
+    "حسابداری",
+    "پیامک"
+  ]
+}

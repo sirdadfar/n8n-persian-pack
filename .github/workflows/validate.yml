@@ -1,0 +1,27 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: اعتبارسنجی ساختاری ورک‌فلوها
+        run: npm run validate
+
+      - name: بررسی معتبر بودن JSON با jq
+        run: |
+          for f in workflows/*.json; do
+            jq -e '.name and (.nodes | length > 0) and .connections' "$f" > /dev/null \
+              || { echo "ساختار نامعتبر: $f"; exit 1; }
+          done

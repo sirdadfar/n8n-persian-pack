@@ -1,0 +1,184 @@
+{
+  "name": "۰۵ — عکس فاکتور → OCR → ثبت خودکار",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-scan",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "b58cd215-956d-4c21-bb8d-49bc3ff2e4a7",
+      "name": "دریافت عکس فاکتور",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -760,
+        300
+      ],
+      "webhookId": "87656f85-c656-4107-8721-e2c9e451c156"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OCR_API_URL || 'https://api.ocr.space/parse/image' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.OCR_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "language",
+              "value": "fas"
+            },
+            {
+              "name": "isOverlayRequired",
+              "value": "false"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89ec8ddc-9269-4d85-8349-77e665c67745",
+      "name": "OCR فاکتور",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// از متن خام فاکتور، مبلغ و تاریخ را بیرون می‌کشیم.\n// ارقام فارسی/عربی به لاتین تبدیل می‌شوند تا محاسبات درست باشد.\nconst toLatin = s => String(s || '')\n  .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))\n  .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));\n\nconst raw = ($json.ParsedResults?.[0]?.ParsedText) || $json.text || '';\nconst text = toLatin(raw).replace(/\\u200c/g, ' ');\n\nconst amountMatches = [...text.matchAll(/(?:مبلغ|جمع|قابل پرداخت|total)[^0-9]{0,20}([0-9][0-9,\\.]{3,})/gi)]\n  .map(m => Number(m[1].replace(/[,\\.]/g, '')))\n  .filter(n => n > 1000);\n\nconst amount = amountMatches.length ? Math.max(...amountMatches) : null;\n\nconst dateMatch = text.match(/(1[34]\\d{2}[\\/\\-]\\d{1,2}[\\/\\-]\\d{1,2})/) ||\n                  new Date().toISOString().slice(0, 10);\n\nconst invoiceNo = (text.match(/(?:شماره|فاکتور)[^0-9]{0,10}([0-9]{3,})/) || [])[1] || null;\n\nreturn [{\n  json: {\n    amount,\n    jalali_or_gregorian_date: dateMatch[0] || dateMatch,\n    invoice_no: invoiceNo,\n    needs_review: amount === null,\n    raw_text: text.slice(0, 1500),\n  },\n}];\n"
+      },
+      "id": "8f341616-d899-448f-998c-98472f5eb72e",
+      "name": "استخراج مبلغ و تاریخ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": {
+          "value": "public"
+        },
+        "table": {
+          "value": "invoices"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "invoice_no": "={{ $json.invoice_no }}",
+            "amount": "={{ $json.amount }}",
+            "issued_at": "={{ $json.jalali_or_gregorian_date }}",
+            "needs_review": "={{ $json.needs_review }}",
+            "created_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "c0787c57-a196-46f0-8983-3ee50f6058ee",
+      "name": "ثبت در دیتابیس",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.ADMIN_TELEGRAM_CHAT_ID }}",
+        "text": "=🧾 فاکتور پردازش شد\nشماره: {{ $json.invoice_no || '—' }}\nمبلغ: {{ $json.amount ? $json.amount.toLocaleString('fa-IR') : 'نیاز به بازبینی دستی' }} تومان\nتاریخ: {{ $json.jalali_or_gregorian_date }}",
+        "additionalFields": {}
+      },
+      "id": "a914e331-983c-4b1b-b8fb-bdc12181fc17",
+      "name": "خلاصه در تلگرام",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "دریافت عکس فاکتور": {
+      "main": [
+        [
+          {
+            "node": "OCR فاکتور",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR فاکتور": {
+      "main": [
+        [
+          {
+            "node": "استخراج مبلغ و تاریخ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "استخراج مبلغ و تاریخ": {
+      "main": [
+        [
+          {
+            "node": "ثبت در دیتابیس",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ثبت در دیتابیس": {
+      "main": [
+        [
+          {
+            "node": "خلاصه در تلگرام",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c0a9c7d7-7b4c-44e5-b5db-8aa37ded4d2f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "حسابداری",
+    "OCR",
+    "هوش مصنوعی"
+  ]
+}

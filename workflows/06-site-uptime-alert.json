@@ -1,0 +1,272 @@
+{
+  "name": "۰۶ — پایش آپتایم و هشدار فوری",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "44bd4dea-a40f-40bc-b121-bdecf6a9d4c6",
+      "name": "هر ۵ دقیقه",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.MONITOR_URL }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "c0258264-8bf2-4db4-9c59-96888b5d0871",
+      "name": "بررسی سایت",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 400,
+              "operator": {
+                "type": "number",
+                "operation": "smaller"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "eb200c7e-e959-4591-b2c4-6b9a73e870cd",
+      "name": "سایت سالم است؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "5e892b75-7930-4378-80f3-0e553b3e9fc9",
+      "name": "بررسی دوباره پس از ۳۰ ثانیه",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -100,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.MONITOR_URL }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "3cdcaa56-84f8-4840-b980-f67f11947d3a",
+      "name": "بررسی دوم",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        140,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 400,
+              "operator": {
+                "type": "number",
+                "operation": "largerEqual"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "aa540da5-ceff-4d80-ace0-f6152262a55b",
+      "name": "قطعی تأیید شد؟",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        380,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.ADMIN_TELEGRAM_CHAT_ID }}",
+        "text": "=🚨 سایت از دسترس خارج شد\n{{ $env.MONITOR_URL }}\nکد وضعیت: {{ $json.statusCode }}\nزمان: {{ $now.toFormat('yyyy/MM/dd HH:mm') }}",
+        "additionalFields": {}
+      },
+      "id": "edac6f0f-5486-4c2a-bb29-ad21e894d574",
+      "name": "هشدار قطعی",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        620,
+        420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4890516a-1f07-4eea-a104-57748b267f3c",
+      "name": "همه‌چیز خوب است",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        180
+      ]
+    }
+  ],
+  "connections": {
+    "هر ۵ دقیقه": {
+      "main": [
+        [
+          {
+            "node": "بررسی سایت",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "بررسی سایت": {
+      "main": [
+        [
+          {
+            "node": "سایت سالم است؟",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "سایت سالم است؟": {
+      "main": [
+        [
+          {
+            "node": "همه‌چیز خوب است",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "بررسی دوباره پس از ۳۰ ثانیه",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "بررسی دوباره پس از ۳۰ ثانیه": {
+      "main": [
+        [
+          {
+            "node": "بررسی دوم",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "بررسی دوم": {
+      "main": [
+        [
+          {
+            "node": "قطعی تأیید شد؟",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "قطعی تأیید شد؟": {
+      "main": [
+        [
+          {
+            "node": "هشدار قطعی",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "همه‌چیز خوب است",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e55182f9-76e8-4784-990d-09c42a94500f",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    "زیرساخت",
+    "مانیتورینگ",
+    "پشتیبانی"
+  ]
+}

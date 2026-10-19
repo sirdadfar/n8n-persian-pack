@@ -1,0 +1,15 @@
+{
+  "name": "n8n-persian-pack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "بستهٔ ورک‌فلوهای آمادهٔ n8n برای کسب‌وکارهای ایرانی",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "build": "python3 scripts/build_workflows.py"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
