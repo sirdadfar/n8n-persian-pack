@@ -12,7 +12,7 @@
           ]
         }
       },
-      "id": "44bd4dea-a40f-40bc-b121-bdecf6a9d4c6",
+      "id": "feecd44f-5cd5-42a9-be41-4b5afa7dd62b",
       "name": "هر ۵ دقیقه",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -35,7 +35,7 @@
           }
         }
       },
-      "id": "c0258264-8bf2-4db4-9c59-96888b5d0871",
+      "id": "f2eae39c-5051-4d68-902e-451bbcb757de",
       "name": "بررسی سایت",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -68,7 +68,7 @@
         },
         "options": {}
       },
-      "id": "eb200c7e-e959-4591-b2c4-6b9a73e870cd",
+      "id": "bef9c7ef-bacc-45be-9bc6-8629f6e758f3",
       "name": "سایت سالم است؟",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -82,7 +82,7 @@
         "amount": 30,
         "unit": "seconds"
       },
-      "id": "5e892b75-7930-4378-80f3-0e553b3e9fc9",
+      "id": "9f3e5742-8312-4405-a21c-8b661c16cc09",
       "name": "بررسی دوباره پس از ۳۰ ثانیه",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -105,7 +105,7 @@
           }
         }
       },
-      "id": "3cdcaa56-84f8-4840-b980-f67f11947d3a",
+      "id": "2040631e-f6f2-4b63-a22f-502d1b92841c",
       "name": "بررسی دوم",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -138,7 +138,7 @@
         },
         "options": {}
       },
-      "id": "aa540da5-ceff-4d80-ace0-f6152262a55b",
+      "id": "25810123-b767-40f2-8e6b-f29457e873f7",
       "name": "قطعی تأیید شد؟",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -153,7 +153,7 @@
         "text": "=🚨 سایت از دسترس خارج شد\n{{ $env.MONITOR_URL }}\nکد وضعیت: {{ $json.statusCode }}\nزمان: {{ $now.toFormat('yyyy/MM/dd HH:mm') }}",
         "additionalFields": {}
       },
-      "id": "edac6f0f-5486-4c2a-bb29-ad21e894d574",
+      "id": "93aef9da-5984-4549-ba51-841831c0c3d3",
       "name": "هشدار قطعی",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -164,7 +164,7 @@
     },
     {
       "parameters": {},
-      "id": "4890516a-1f07-4eea-a104-57748b267f3c",
+      "id": "0d27cb35-39ed-4a16-bb7c-f37a95041e99",
       "name": "همه‌چیز خوب است",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -260,13 +260,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "e55182f9-76e8-4784-990d-09c42a94500f",
+  "versionId": "696f11bb-a001-4bff-a3cd-310dad00ecb2",
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "زیرساخت",
-    "مانیتورینگ",
-    "پشتیبانی"
-  ]
+  "tags": []
 }

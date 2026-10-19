@@ -12,7 +12,7 @@
           ]
         }
       },
-      "id": "c30b1e7f-e781-43b0-a631-074fb2ea726b",
+      "id": "d0f8d2cb-e887-4ab3-bee0-2c8428097679",
       "name": "هر ۳۰ دقیقه",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -50,7 +50,7 @@
         },
         "options": {}
       },
-      "id": "8fab8870-bbbd-4d55-bb9f-5eaf964990fd",
+      "id": "e53cd0a4-aa5b-41e6-ab58-601ec08f7276",
       "name": "سفارش‌های در انتظار پرداخت",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -64,7 +64,7 @@
         "batchSize": 5,
         "options": {}
       },
-      "id": "2edc49f9-96de-4448-91fa-76d17e3d3073",
+      "id": "d2aabc6d-db86-4ad0-82f1-f8c4f7ac1215",
       "name": "دسته‌دسته",
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
@@ -107,7 +107,7 @@
         },
         "options": {}
       },
-      "id": "24c7add6-1c6a-431e-89f3-8d71250f7a5e",
+      "id": "2d1946e2-8711-4785-940a-15a498bf8030",
       "name": "قابل یادآوری است؟",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -141,7 +141,7 @@
           }
         }
       },
-      "id": "9982dfee-cbed-4db8-9c2a-e968f91f5575",
+      "id": "84277be1-b29b-4f69-aff9-c3252be4f2c8",
       "name": "پیامک یادآوری",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -167,7 +167,7 @@
           }
         }
       },
-      "id": "67d025cb-2294-4e5e-ada7-8ebccb5977b1",
+      "id": "0c4b045f-7ca3-4dfc-bfbe-e099b664c6ad",
       "name": "ثبت برچسب یادآوری",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -181,7 +181,7 @@
         "amount": 2,
         "unit": "seconds"
       },
-      "id": "d7f14e15-e242-4f19-8a68-403d51be7b0e",
+      "id": "ff51a7be-9f78-4c9e-8f37-3daa0e1dea5e",
       "name": "مکث",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -192,13 +192,24 @@
     },
     {
       "parameters": {},
-      "id": "6231e4e0-2db1-4b57-959d-c2e2b583899a",
+      "id": "91c18b24-8ff6-4202-8da3-6d00cbb94cdf",
       "name": "رد شود",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
         140,
         420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "55ad9ee1-fd19-45cb-a26a-854ceba3f34c",
+      "name": "پایان همهٔ دسته‌ها",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        140,
+        540
       ]
     }
   ],
@@ -229,14 +240,14 @@
       "main": [
         [
           {
-            "node": "قابل یادآوری است؟",
+            "node": "پایان همهٔ دسته‌ها",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "دسته‌دسته",
+            "node": "قابل یادآوری است؟",
             "type": "main",
             "index": 0
           }
@@ -299,13 +310,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4818a0f7-e145-46e5-8fd3-c227aefc9cb9",
+  "versionId": "fee0d96f-abd2-4f4f-9e18-71e13fa6153b",
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "فروشگاه",
-    "پیامک",
-    "بازیابی فروش"
-  ]
+  "tags": []
 }

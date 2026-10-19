@@ -32,10 +32,11 @@ Workflows import **inactive** and without credentials — by design. Create cred
 ## Validate
 
 ```bash
-npm run validate
+npm run validate      # بررسی ساختاری بدون نیاز به n8n
+npm run test:import   # ایمپورت واقعی در یک نمونهٔ موقت n8n (نیازمند نصب n8n)
 ```
 
-Checks JSON validity, unique UUIDs, known node types, dangling connections, orphan nodes and that no workflow ships pre-activated. Runs in CI on every push.
+`validate` checks JSON validity, unique UUIDs, known node types, dangling connections, orphan nodes and that no workflow ships pre-activated — this runs in CI on every push. `test:import` imports all workflows into a throwaway n8n instance and asserts they land in the database, which is the only way to catch importer-level schema issues (for example, n8n's CLI rejects duplicate tag names across workflows).
 
 ## Environment variables
 

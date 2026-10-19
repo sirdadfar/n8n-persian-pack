@@ -6,7 +6,7 @@
         "event": "order.created",
         "options": {}
       },
-      "id": "910db553-596b-4b5e-b6e7-4025e2da4585",
+      "id": "1ddf57d8-8105-4e96-9f67-42fd60993e0b",
       "name": "سفارش جدید ووکامرس",
       "type": "n8n-nodes-base.wooCommerceTrigger",
       "typeVersion": 1,
@@ -14,7 +14,7 @@
         -780,
         300
       ],
-      "webhookId": "189256e5-7399-4dce-a98e-178f87cceed2"
+      "webhookId": "eaa2a063-255e-44eb-9540-8c0483c2c01d"
     },
     {
       "parameters": {
@@ -56,7 +56,7 @@
         },
         "options": {}
       },
-      "id": "76337062-0576-47df-ba28-2c8577495fd4",
+      "id": "b7679d62-1d97-4a16-b3b6-c5cf17f59a9c",
       "name": "آماده‌سازی دادهٔ سفارش",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -94,7 +94,7 @@
           }
         }
       },
-      "id": "699e58e7-254d-4af4-aa6b-72408b59e0ea",
+      "id": "e97680df-6f8b-45a2-87b4-05fc7e90a77f",
       "name": "ثبت فاکتور در حسابداری",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -127,7 +127,7 @@
         },
         "options": {}
       },
-      "id": "2f88918e-dffd-4d50-b5cf-2ca282fd5931",
+      "id": "01019929-daaf-40e5-80db-8d890c36edec",
       "name": "فاکتور ثبت شد؟",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -161,7 +161,7 @@
           }
         }
       },
-      "id": "3fb232fb-0eb0-4462-92be-8814f4090b2f",
+      "id": "568adffc-d80a-46c9-9074-127b7fbdb52c",
       "name": "پیامک تأیید به مشتری",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -176,7 +176,7 @@
         "text": "=⚠️ ثبت فاکتور سفارش {{ $('آماده‌سازی دادهٔ سفارش').item.json.order_id }} در حسابداری ناموفق بود.\nکد پاسخ: {{ $json.statusCode }}\nمشتری: {{ $('آماده‌سازی دادهٔ سفارش').item.json.customer }}",
         "additionalFields": {}
       },
-      "id": "6aed6d06-5d9f-4bcc-b704-db325978aac5",
+      "id": "48f264f4-fd1f-43c3-9477-62cb335f9187",
       "name": "هشدار به مدیر در تلگرام",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -187,7 +187,7 @@
     },
     {
       "parameters": {},
-      "id": "de737b5d-f050-4059-907b-e2a686d87892",
+      "id": "5e0e7724-7f9f-4533-9fb3-46e5250fefa3",
       "name": "پایان",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
@@ -276,13 +276,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "402a2a2b-4ca5-4c36-9e90-92eb1e28f314",
+  "versionId": "e93c3cde-cff2-4fbd-9706-6818540d674a",
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "فروشگاه",
-    "حسابداری",
-    "پیامک"
-  ]
+  "tags": []
 }

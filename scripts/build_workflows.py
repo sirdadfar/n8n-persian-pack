@@ -47,6 +47,9 @@ def multi(conns_list):
 
 
 def workflow(name, nodes, connections, tags=None, **settings):
+    # برچسب‌ها عمداً خالی می‌مانند: ایمپورتر CLI در n8n با نام تکراری برچسب
+    # بین دو ورک‌فلو خطای UNIQUE می‌دهد. برچسب پیشنهادی در docs آمده است.
+    _ = tags
     wf = {
         "name": name,
         "nodes": nodes,
@@ -55,7 +58,7 @@ def workflow(name, nodes, connections, tags=None, **settings):
         "settings": {"executionOrder": "v1", **settings},
         "versionId": str(uuid.uuid4()),
         "meta": {"templateCredsSetupCompleted": False},
-        "tags": tags or [],
+        "tags": [],
     }
     return wf
 
@@ -248,12 +251,14 @@ def wf2_abandoned_cart():
     )
     n_wait = node("مکث", "n8n-nodes-base.wait", 1.1, {"amount": 2, "unit": "seconds"}, 580, 220)
     n_skip = node("رد شود", "n8n-nodes-base.noOp", 1, {}, 140, 420)
+    n_done = node("پایان همهٔ دسته‌ها", "n8n-nodes-base.noOp", 1, {}, 140, 540)
 
     conns = multi([
         chain(["هر ۳۰ دقیقه", "سفارش‌های در انتظار پرداخت", "دسته‌دسته"]),
+        # خروجی ۰ = «تمام شد»، خروجی ۱ = «دستهٔ بعدی».
         {"دسته‌دسته": {"main": [
+            [{"node": "پایان همهٔ دسته‌ها", "type": "main", "index": 0}],
             [{"node": "قابل یادآوری است؟", "type": "main", "index": 0}],
-            [{"node": "دسته‌دسته", "type": "main", "index": 0}],
         ]}},
         {"قابل یادآوری است؟": {"main": [
             [{"node": "پیامک یادآوری", "type": "main", "index": 0}],
@@ -265,7 +270,7 @@ def wf2_abandoned_cart():
     ])
     return workflow(
         "۰۲ — یادآوری سبد خرید رها شده",
-        [n_sched, n_fetch, n_split, n_filter, n_sms, n_flag, n_wait, n_skip],
+        [n_sched, n_fetch, n_split, n_filter, n_sms, n_flag, n_wait, n_skip, n_done],
         conns,
         tags=["فروشگاه", "پیامک", "بازیابی فروش"],
     )

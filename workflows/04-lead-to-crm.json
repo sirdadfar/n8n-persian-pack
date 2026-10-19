@@ -8,7 +8,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "9bfee2a0-cf3f-45fb-8600-0559e16f2e4b",
+      "id": "210525a0-4153-4f58-b0a9-224af27187fc",
       "name": "دریافت لید",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -16,7 +16,7 @@
         -760,
         300
       ],
-      "webhookId": "62665649-56a9-485c-b67b-754fa26b8e88"
+      "webhookId": "073474e5-e739-4b6c-93d2-2e87aceadaaf"
     },
     {
       "parameters": {
@@ -58,7 +58,7 @@
         },
         "options": {}
       },
-      "id": "ff2ac787-aba9-498c-8ea5-3a83f7bf57e3",
+      "id": "3de9bf69-55ab-4c21-82a4-2b57b92b7969",
       "name": "نرمال‌سازی",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -91,7 +91,7 @@
         },
         "options": {}
       },
-      "id": "b3ea5220-a5ab-46f5-ad39-f5b1b3ce9ed9",
+      "id": "5c3814cc-a085-4506-b6c6-e0086b8ee616",
       "name": "شماره معتبر است؟",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
@@ -125,7 +125,7 @@
           }
         }
       },
-      "id": "8799d614-3a5e-45e8-9704-9ec3d018c2f6",
+      "id": "7f7a271e-4700-44f1-9d9e-90576296cceb",
       "name": "ثبت در CRM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -140,7 +140,7 @@
         "text": "=🔔 لید جدید از {{ $('نرمال‌سازی').item.json.source }}\nنام: {{ $('نرمال‌سازی').item.json.name }}\nموبایل: {{ $('نرمال‌سازی').item.json.phone }}\nپیام: {{ $('نرمال‌سازی').item.json.message }}",
         "additionalFields": {}
       },
-      "id": "e358e293-6f16-45cc-9436-622f8222f87c",
+      "id": "d4108a5d-abed-453b-b576-1af1b702ae92",
       "name": "اعلان فوری به مدیر",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -157,7 +157,7 @@
           "responseCode": 422
         }
       },
-      "id": "64b586c7-6757-490b-a4e1-ad3533973aff",
+      "id": "fd8ab15c-713f-47c4-b029-6f465d1409fb",
       "name": "پاسخ: شماره نامعتبر",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -172,7 +172,7 @@
         "responseBody": "={{ JSON.stringify({ ok: true }) }}",
         "options": {}
       },
-      "id": "53c577ae-5ea8-4552-89c4-79da51b456fd",
+      "id": "dee043c2-97cb-42d4-8022-ed050bbe62c9",
       "name": "پاسخ: ثبت شد",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
@@ -244,13 +244,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "22151e0d-09f5-4a4c-b9be-0c2da035d186",
+  "versionId": "13bf79c2-9b74-4e77-849d-81b2e92dec3e",
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "فروش",
-    "CRM",
-    "لید"
-  ]
+  "tags": []
 }

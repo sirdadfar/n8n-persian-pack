@@ -12,7 +12,7 @@
           ]
         }
       },
-      "id": "e7496448-ce4a-4ae4-bcbb-be92da3669e4",
+      "id": "90859ee4-5f27-4470-9179-023e170a5fc6",
       "name": "هر روز ۲۱:۰۰",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -46,7 +46,7 @@
         },
         "options": {}
       },
-      "id": "1ab6555b-d5cb-48d3-8e9d-ddd38b914678",
+      "id": "297690da-0372-4db5-93e2-05716106d915",
       "name": "سفارش‌های امروز",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -59,7 +59,7 @@
       "parameters": {
         "jsCode": "// تجمیع سفارش‌های امروز به یک خلاصهٔ قابل خواندن\nconst orders = $input.all().map(i => i.json).filter(o => o && o.id);\nconst paid = orders.filter(o => ['processing', 'completed'].includes(o.status));\n\nlet revenue = 0;\nconst productCount = {};\nconst customerCount = {};\n\nfor (const o of paid) {\n  revenue += Number(o.total || 0);\n  const name = `${o.billing?.first_name || ''} ${o.billing?.last_name || ''}`.trim() || 'مشتری مهمان';\n  customerCount[name] = (customerCount[name] || 0) + 1;\n  for (const item of o.line_items || []) {\n    productCount[item.name] = (productCount[item.name] || 0) + item.quantity;\n  }\n}\n\nconst topProducts = Object.entries(productCount)\n  .sort((a, b) => b[1] - a[1])\n  .slice(0, 5)\n  .map(([name, qty], i) => `${i + 1}. ${name} — ${qty} عدد`);\n\nconst repeatCustomers = Object.entries(customerCount).filter(([, n]) => n > 1);\n\nconst fmt = n => new Intl.NumberFormat('fa-IR').format(Math.round(n));\n\nconst text = [\n  `📊 گزارش فروش ${$now.toFormat('yyyy/MM/dd')}`,\n  '',\n  `سفارش پرداخت‌شده: ${fmt(paid.length)}`,\n  `درآمد: ${fmt(revenue)} تومان`,\n  `میانگین سبد خرید: ${fmt(paid.length ? revenue / paid.length : 0)} تومان`,\n  '',\n  topProducts.length ? 'پرفروش‌ها:' : 'امروز فروشی ثبت نشده.',\n  ...topProducts,\n  repeatCustomers.length ? `\\nمشتری تکراری: ${repeatCustomers.length} نفر` : '',\n].filter(Boolean).join('\\n');\n\nreturn [{ json: { text, revenue, orders: paid.length, topProducts } }];\n"
       },
-      "id": "f6cf38b2-5a24-47bc-813a-7b0d2cadfa1b",
+      "id": "3bafe4e6-0851-4772-8411-fb38879d7a8d",
       "name": "محاسبهٔ گزارش",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -74,7 +74,7 @@
         "text": "={{ $json.text }}",
         "additionalFields": {}
       },
-      "id": "261c8b59-495f-44f7-bc5b-2db527609e85",
+      "id": "b87fe2cf-a2ca-4bf0-9414-21ff9273b8b3",
       "name": "ارسال به تلگرام",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
@@ -98,7 +98,7 @@
           }
         }
       },
-      "id": "7417256b-3a61-47d3-8582-2730a8545791",
+      "id": "607c517e-8de1-446c-9e04-9435e04ab669",
       "name": "ذخیرهٔ گزارش روی سرور",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -152,12 +152,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d5816ae4-9a7c-42f3-a011-4108dfa9fc09",
+  "versionId": "e8c5e98a-920e-40fc-973e-e47eb8b2bb18",
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": [
-    "گزارش",
-    "مدیریت"
-  ]
+  "tags": []
 }

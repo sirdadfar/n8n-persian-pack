@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "validate": "node scripts/validate.mjs",
-    "build": "python3 scripts/build_workflows.py"
+    "build": "python3 scripts/build_workflows.py",
+    "test:import": "bash scripts/import-test.sh"
   },
   "engines": {
     "node": ">=18"
