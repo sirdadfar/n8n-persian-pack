@@ -2,10 +2,15 @@
 services:
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
+    # برای production به‌جای latest یک نسخهٔ مشخص pin کنید تا آپدیت ناخواسته
+    # ورک‌فلوها را نشکند (مثلاً docker.n8n.io/n8nio/n8n:1.109.2).
     container_name: n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      # فقط روی loopback؛ برای اینترنت از reverse proxy با TLS استفاده کنید
+      # (Nginx/Caddy + دامنه + گواهی). پورت باز روی 0.0.0.0 یعنی پنل n8n
+      # بدون TLS در دسترس همه است.
+      - "127.0.0.1:5678:5678"
     env_file:
       - .env
     environment:
@@ -15,6 +20,10 @@ services:
       # وب‌هوک‌ها را با آدرس واقعی دامنه بساز تا لینک‌های ثبت‌شده درست باشند
       - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
       - N8N_RUNNERS_ENABLED=true
+      # ورک‌فلوها از $env می‌خوانند؛ این گزینه دسترسی env را باز می‌کند.
+      # هر کسی که اجازهٔ ویرایش ورک‌فلو داشته باشد می‌تواند env را بخواند؛
+      # دسترسی ویرایش را محدود نگه دارید و N8N_ENCRYPTION_KEY را در نسخه‌هایی
+      # که N8N_BLOCKED_ENV_VARIABLES دارند مسدود کنید.
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     volumes:
       - n8n_data:/home/node/.n8n

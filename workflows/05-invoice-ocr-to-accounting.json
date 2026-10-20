@@ -5,6 +5,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "invoice-scan",
+        "authentication": "basicAuth",
         "responseMode": "lastNode",
         "options": {}
       },
@@ -16,7 +17,13 @@
         -760,
         300
       ],
-      "webhookId": "1b483c5c-3f79-494c-845d-e1292ad4e81d"
+      "webhookId": "1b483c5c-3f79-494c-845d-e1292ad4e81d",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "persian-pack-webhook-auth",
+          "name": "Webhook Basic Auth (n8n Persian Pack)"
+        }
+      }
     },
     {
       "parameters": {

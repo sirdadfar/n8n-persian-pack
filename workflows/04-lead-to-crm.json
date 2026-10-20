@@ -5,6 +5,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "lead",
+        "authentication": "basicAuth",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -16,7 +17,13 @@
         -760,
         300
       ],
-      "webhookId": "073474e5-e739-4b6c-93d2-2e87aceadaaf"
+      "webhookId": "073474e5-e739-4b6c-93d2-2e87aceadaaf",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "persian-pack-webhook-auth",
+          "name": "Webhook Basic Auth (n8n Persian Pack)"
+        }
+      }
     },
     {
       "parameters": {

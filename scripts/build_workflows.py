@@ -28,6 +28,21 @@ def node(name, ntype, version, params, x, y, **extra):
     return n
 
 
+def webhook_auth():
+    """ارجاع به Credential احراز هویت وبهوک.
+
+    خود Credential داخل ریپو نیست؛ کاربر بعد از ایمپورت یک Basic Auth
+    با همین نام می‌سازد و به گره وصل می‌کند. وب‌هوک بدون احراز هویت
+    یعنی هر کسی روی اینترنت می‌تواند آن را صدا بزند.
+    """
+    return {
+        "httpBasicAuth": {
+            "id": "persian-pack-webhook-auth",
+            "name": "Webhook Basic Auth (n8n Persian Pack)",
+        }
+    }
+
+
 def chain(names):
     """زنجیرهٔ ساده: هر گره به گره بعدی وصل می‌شود (خروجی اصلی)."""
     conns = {}
@@ -386,11 +401,13 @@ def wf4_lead_to_crm():
         {
             "httpMethod": "POST",
             "path": "lead",
+            "authentication": "basicAuth",
             "responseMode": "responseNode",
             "options": {},
         },
         -760, 300,
         webhookId=str(uuid.uuid4()),
+        credentials=webhook_auth(),
     )
     n_normalize = node(
         "نرمال‌سازی", "n8n-nodes-base.set", 3.4,
@@ -494,9 +511,16 @@ def wf5_invoice_ocr():
     """عکس فاکتور → OCR → استخراج مبلغ → ثبت در دیتابیس + خلاصه در تلگرام."""
     n_hook = node(
         "دریافت عکس فاکتور", "n8n-nodes-base.webhook", 2,
-        {"httpMethod": "POST", "path": "invoice-scan", "responseMode": "lastNode", "options": {}},
+        {
+            "httpMethod": "POST",
+            "path": "invoice-scan",
+            "authentication": "basicAuth",
+            "responseMode": "lastNode",
+            "options": {},
+        },
         -760, 300,
         webhookId=str(uuid.uuid4()),
+        credentials=webhook_auth(),
     )
     n_ocr = node(
         "OCR فاکتور", "n8n-nodes-base.httpRequest", 4.2,

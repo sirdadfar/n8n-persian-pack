@@ -47,6 +47,44 @@ function isFinalAction(n) {
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && !n.parameters?.disableOutput;
 }
 
+/**
+ * الگوهای رایج Secret. ورک‌فلوها عمومی‌اند؛ هر مقدار واقعی اینجا یعنی نشت کلید.
+ * مقادیری که از `$env` یا `{{ ... }}` می‌آیند اسکن نمی‌شوند.
+ */
+const SECRET_PATTERNS = [
+  [/\bsk-[A-Za-z0-9_-]{20,}/, 'کلید سبک OpenAI'],
+  [/\bgh[pousr]_[A-Za-z0-9]{20,}/, 'توکن GitHub'],
+  [/\bxox[abpsr]-[A-Za-z0-9-]{10,}/, 'توکن Slack'],
+  [/\bAKIA[0-9A-Z]{16}\b/, 'کلید AWS'],
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, 'کلید خصوصی'],
+  [/\b\d{6,}:[A-Za-z0-9_-]{30,}\b/, 'توکن ربات تلگرام'],
+  [/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/, 'JWT'],
+  [/\bBearer\s+(?!\{\{)[A-Za-z0-9._-]{16,}/, 'توکن Bearer داخل متن'],
+];
+
+function scanSecrets(file, label, value) {
+  if (typeof value === 'string') {
+    if (value.includes('$env') || value.includes('{{')) return;
+
+    for (const [pattern, name] of SECRET_PATTERNS) {
+      if (pattern.test(value)) {
+        err(file, `گرهٔ «${label}» احتمالاً ${name} را به‌صورت متن دارد`);
+        return;
+      }
+    }
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) scanSecrets(file, label, item);
+    return;
+  }
+
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value)) scanSecrets(file, label, item);
+  }
+}
+
 const errors = [];
 const warnings = [];
 let checked = 0;
@@ -118,10 +156,37 @@ for (const file of readdirSync(WORKFLOWS_DIR).filter((f) => f.endsWith('.json'))
       err(file, `پارامترهای گره «${label}» نامعتبر است`);
     }
 
-    // وب‌هوک بدون path کار نمی‌کند
-    if (n.type === 'n8n-nodes-base.webhook' && !n.parameters?.path) {
-      err(file, `وب‌هوک «${label}» مسیر (path) ندارد`);
+    // وب‌هوک بدون path کار نمی‌کند؛ بدون احراز هویت هم هر کسی می‌تواند
+    // آن را صدا بزند. هر دو شرط اینجا اجباری‌اند.
+    if (n.type === 'n8n-nodes-base.webhook') {
+      if (!n.parameters?.path) {
+        err(file, `وب‌هوک «${label}» مسیر (path) ندارد`);
+      }
+
+      const auth = n.parameters?.authentication;
+
+      if (!auth || auth === 'none') {
+        err(file, `وب‌هوک «${label}» احراز هویت ندارد (authentication باید basicAuth یا headerAuth باشد)`);
+      } else if (!n.credentials || Object.keys(n.credentials).length === 0) {
+        err(file, `وب‌هوک «${label}» احراز هویت دارد اما Credential به آن وصل نشده است`);
+      }
+
+      if (n.parameters?.responseMode === 'responseNode'
+        && !wf.nodes.some((x) => x.type === 'n8n-nodes-base.respondToWebhook')) {
+        err(file, `وب‌هوک «${label}» پاسخ با گره است ولی گرهٔ respondToWebhook ندارد`);
+      }
     }
+
+    // ---------- اسکن Secret ----------
+    if (n.credentials && typeof n.credentials === 'object') {
+      for (const [type, cred] of Object.entries(n.credentials)) {
+        if (cred && typeof cred === 'object' && ('data' in cred || 'value' in cred)) {
+          err(file, `گرهٔ «${label}» مقدار Credential (${type}) را داخل JSON دارد`);
+        }
+      }
+    }
+
+    scanSecrets(file, label, n.parameters);
   }
 
   // ---------- اتصال‌ها ----------

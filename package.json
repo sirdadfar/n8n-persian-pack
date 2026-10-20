@@ -1,6 +1,6 @@
 {
   "name": "n8n-persian-pack",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "بستهٔ ورک‌فلوهای آمادهٔ n8n برای کسب‌وکارهای ایرانی",
   "type": "module",

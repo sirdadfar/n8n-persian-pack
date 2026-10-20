@@ -81,10 +81,40 @@ Authorization: Bearer {CRM_API_TOKEN}
 
 ---
 
+## ۷) احراز هویت وبهوک (ورک‌فلوهای ۰۴ و ۰۵)
+
+وبهوک یک آدرس عمومی است: هر کسی که مسیر را بداند می‌تواند برای آن درخواست بفرستد. برای همین،
+گره‌های وبهوک این بسته با `authentication: basicAuth` و یک ارجاع به Credential از پیش تعیین‌شده
+(`Webhook Basic Auth (n8n Persian Pack)`) عرضه می‌شوند.
+
+بعد از ایمپورت:
+
+1. در n8n: **Credentials → New → Basic Auth**
+2. نام را دقیقاً بگذارید: `Webhook Basic Auth (n8n Persian Pack)`
+3. یک نام کاربری و رمز تصادفی و طولانی بسازید (مثلاً ۳۲ کاراکتر)
+4. در گرهٔ وبهوک، همین Credential را انتخاب کنید (اگر n8n هشدار «credential not found» می‌دهد،
+   یعنی مرحلهٔ ۲ انجام نشده است)
+5. آدرس وبهوک را با همان نام کاربری/رمز به فرم سایت بدهید:
+
+```bash
+curl -u 'webhook-user:long-random-password' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"علی","phone":"09121234567"}' \
+  https://n8n.example.com/webhook/lead
+```
+
+> مسیر وبهوک (`lead` و `invoice-scan`) داخل JSON عمومی است؛ «مخفی بودن مسیر» کنترل امنیتی
+> حساب نمی‌شود. احراز هویت Basic Auth روی TLS انجام می‌شود، پس حتماً HTTPS داشته باشید.
+
+---
+
 ## چک‌لیست امنیتی
 
 - [ ] `N8N_ENCRYPTION_KEY` تصادفی و طولانی است
 - [ ] `.env` در `.gitignore` هست (پیش‌فرض همین است)
-- [ ] پنل n8n روی اینترنت با Basic Auth یا IP allowlist محافظت شده
+- [ ] پنل n8n روی اینترنت با Basic Auth یا IP allowlist محافظت شده و پشت HTTPS است
+- [ ] پورت ۵۶۷۸ روی `0.0.0.0` باز نیست (در `docker-compose.yml` روی loopback بسته شده)
+- [ ] برای وبهوک‌های ۰۴ و ۰۵ حتماً Credential احراز هویت ساخته و وصل شده است
 - [ ] کلید ووکامرس فقط Read/Write است، نه Admin
 - [ ] توکن‌ها را هر چند ماه یک‌بار بچرخانید
+- [ ] اجراهای ذخیره‌شدهٔ n8n (که ممکن است دادهٔ مشتری داشته باشند) پاک‌سازی/محدود شده‌اند
